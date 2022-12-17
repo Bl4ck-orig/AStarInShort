@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -86,7 +86,7 @@ internal class AStar
 
         for(Node currentNode = null; openNodes.Count != 0; endNode.CameFrom = currentNode)
         {
-            currentNode = openNodes.OrderBy(x => x.T).First();
+            currentNode = openNodes.OrderBy(x => x.T + x.StepCost).First();
 
             if (currentNode == endNode)
                 return SetPath(endNode);
@@ -94,8 +94,11 @@ internal class AStar
             openNodes.Remove(currentNode);
 
             float nextT = 0f;
-            foreach (var neighbour in GetNeighbours(currentNode).Where(x => currentNode.GetStepCost(x, out float stepCost) && (nextT = currentNode.G + stepCost) < x.G))
+            float stepCost = 0f;
+            foreach (var neighbour in GetNeighbours(currentNode)
+                .Where(x => currentNode.GetStepCost(x, out stepCost) && (nextT = currentNode.G + stepCost) < x.G))
             {
+                neighbour.StepCost = stepCost;
                 neighbour.CameFrom = currentNode;
                 neighbour.G = nextT;
                 neighbour.SetT();
@@ -124,20 +127,20 @@ internal class AStar
 
         for (int x = Math.Max(_n.X - 1, 0); x <= Math.Min(_n.X + 1, xLength - 1); x++)
             for (int y = Math.Max(_n.Y - 1, 0); y <= Math.Min(_n.Y + 1, yLength - 1); y++)
-                if (x != _n.X || y != _n.Y)
-                    neighbours.Add(nodes[x, y]);
+                neighbours.Add(nodes[x, y]);
 
+        neighbours.Remove(_n);
         return neighbours;
     }
 
     private class Node
     {
-        float vertCost = 1f;
+        float vertCost = 1;
         float diagCost = 1.4f;
 
         public int X, Y;
         public float T, G = float.MaxValue;
-        public float H;
+        public float H, StepCost;
         public bool Obs;
         public Node CameFrom;
 
@@ -158,8 +161,9 @@ internal class AStar
             int yDist = Math.Abs(Y - endNode.Y);
 
             int verts = Math.Abs(xDist - yDist);
+            int diags = (Math.Max(xDist, yDist) - verts);
 
-            H = verts * vertCost + (Math.Max(xDist, yDist) - verts) * diagCost;
+            H = verts * vertCost + diags * diagCost;
         }
 
         public void SetT() => T = G + H;
