@@ -4,61 +4,71 @@ using System.Linq;
 
 internal class AStar
 {
-    static int xLength = 20;
-    static int yLength = 10;
-    static int obstacles = 10;
-    static int seed = 0;
 
-    static Node startNode, endNode;
-    static Node[,] nodes;
+   static int xLength = 20;
+   static int yLength = 10;
+   static int obstacles = 20;
+   static int seed = 0;
+   
+   static Node startNode, endNode;
+   static Node[,] nodes;
+   
+   static void Main(string[] args)
+   {
+       Console.WriteLine("X start:");
+       int xStart = int.Parse(Console.ReadLine());
+       Console.WriteLine("Y start:");
+       int yStart = int.Parse(Console.ReadLine());
+       Console.WriteLine("X end:");
+       int xEnd = int.Parse(Console.ReadLine()); 
+       Console.WriteLine("Y end:");
+       int yEnd = int.Parse(Console.ReadLine());
 
-    static void Main(string[] args)
-    {
-        Console.WriteLine("X start:");
-        int xStart = int.Parse(Console.ReadLine());
-        Console.WriteLine("Y start:");
-        int yStart = int.Parse(Console.ReadLine());
-        Console.WriteLine("X end:");
-        int xEnd = int.Parse(Console.ReadLine()); 
-        Console.WriteLine("Y end:");
-        int yEnd = int.Parse(Console.ReadLine());
+       endNode = new Node(xEnd, yEnd);
+       startNode = new Node(xStart, yStart);
 
-        endNode = new Node(xEnd, yEnd);
-        startNode = new Node(xStart, yStart);
+       CreateMatrix();
 
-        CreateMatrix();
+       try
+       {
+           List<Node> path = AStart();
+           PrintMatrix(path);
+       }
+       catch(Exception e)
+       {
+           Console.WriteLine("Path not possible!");
+           PrintMatrix(new List<Node>());
+       }
 
-        try
-        {
-            List<Node> path = AStart();
-            PrintMatrix(path);
-        }
-        catch(Exception e)
-        {
-            Console.WriteLine("Path not possible!");
-            PrintMatrix(new List<Node>());
-        }
+       Console.ReadLine();
+   }
 
-        Console.ReadLine();
-    }
 
+    
     static void CreateMatrix()
     {
         nodes = new Node[xLength, yLength];
+    
+        for(int x = 0; x < xLength; x++)
+            for(int y = 0; y < yLength; y++)
+                nodes[x,y] = new Node(x,y);
 
-        for (int x = 0; x < xLength; x++)
-            for (int y = 0; y < yLength; y++)
-                nodes[x, y] = new Node(x, y);
-
-        Random rnd = new Random(seed);
-        for (int i = 0; i < obstacles; i++)
+        obstacles = Math.Min(obstacles, xLength * yLength);
+        Random rng = new Random(seed);
+        for(int i = 0; i < obstacles; i++)
         {
-            int nX = rnd.Next(xLength);
-            int nY = rnd.Next(yLength);
+            int xRand = rng.Next(xLength);
+            int yRand = rng.Next(yLength);
 
-            Node n = nodes[nX, nY];
-            if (!n.Obs && n != startNode && n != endNode)
-                nodes[nX, nY].Obs = true;
+            Node n = nodes[xRand, yRand];
+    
+            if(n.IsObstacle || n == startNode || n == endNode)
+            {
+                i--;
+                continue;
+            }
+    
+            nodes[xRand,yRand].IsObstacle = true;
         }
     }
 
@@ -67,7 +77,7 @@ internal class AStar
         for (int y = 0; y < yLength; y++)
         {
             for (int x = 0; x < xLength; x++)
-                Console.Write(((nodes[x, y].Obs) ? 'O' : ((_p.Contains(nodes[x, y])) ? 'X' : '*')));
+                Console.Write(((nodes[x, y].IsObstacle) ? 'O' : ((_p.Contains(nodes[x, y])) ? 'X' : '*')));
 
             Console.WriteLine();
         }
@@ -141,14 +151,14 @@ internal class AStar
         public int X, Y;
         public float T, G = float.MaxValue;
         public float H, StepCost;
-        public bool Obs;
+        public bool IsObstacle;
         public Node CameFrom;
 
         public Node(int _x, int _y)
         {
             X = _x;
             Y = _y;
-            Obs = false;
+            IsObstacle = false;
             SetH();
         }
 
@@ -171,7 +181,7 @@ internal class AStar
         public bool GetStepCost(Node _nN, out float _c)
         {
             _c = (X == _nN.X || Y == _nN.Y) ? vertCost : diagCost;
-            return !_nN.Obs;
+            return !_nN.IsObstacle;
         }
     }
 }
