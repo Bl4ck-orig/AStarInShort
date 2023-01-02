@@ -103,14 +103,14 @@ internal class AStar
 
             openNodes.Remove(currentNode);
 
-            float nextT = 0f;
+            float nextG = 0f;
             float stepCost = 0f;
             foreach (var neighbour in GetNeighbours(currentNode)
-                .Where(x => currentNode.GetStepCost(x, out stepCost) && (nextT = currentNode.G + stepCost) < x.G))
+                .Where(x => currentNode.GetStepCost(x, out stepCost) && (nextG = currentNode.G + stepCost) < x.G))
             {
                 neighbour.StepCost = stepCost;
                 neighbour.CameFrom = currentNode;
-                neighbour.G = nextT;
+                neighbour.G = nextG;
                 neighbour.SetT();
             
                 if (!openNodes.Contains(neighbour))
