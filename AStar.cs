@@ -5,84 +5,83 @@ using System.Linq;
 internal class AStar
 {
 
-   static int xLength = 20;
-   static int yLength = 10;
-   static int obstacles = 20;
-   static int seed = 0;
-   
-   static Node startNode, endNode;
-   static Node[,] nodes;
-   
-   static void Main(string[] args)
-   {
-       Console.WriteLine("X start:");
-       int xStart = int.Parse(Console.ReadLine());
-       Console.WriteLine("Y start:");
-       int yStart = int.Parse(Console.ReadLine());
-       Console.WriteLine("X end:");
-       int xEnd = int.Parse(Console.ReadLine()); 
-       Console.WriteLine("Y end:");
-       int yEnd = int.Parse(Console.ReadLine());
+      static int xLength = 20;
+      static int yLength = 10;
+      static int obstacles = 20;
+      static int seed = 0;
 
-       endNode = new Node(xEnd, yEnd);
-       startNode = new Node(xStart, yStart);
+      static Node startNode, endNode;
+      static Node[,] nodes;
 
-       CreateMatrix();
+      static void Main(string[] args)
+      {
+         Console.WriteLine("X start:");
+         int xStart = int.Parse(Console.ReadLine());
+         Console.WriteLine("Y start:");
+         int yStart = int.Parse(Console.ReadLine());
+         Console.WriteLine("X end:");
+         int xEnd = int.Parse(Console.ReadLine()); 
+         Console.WriteLine("Y end:");
+         int yEnd = int.Parse(Console.ReadLine());
 
-       try
-       {
-           List<Node> path = AStart();
-           PrintMatrix(path);
-       }
-       catch(Exception e)
-       {
-           Console.WriteLine("Path not possible!");
-           PrintMatrix(new List<Node>());
-       }
+         endNode = new Node(xEnd, yEnd);
+         startNode = new Node(xStart, yStart);
 
-       Console.ReadLine();
-   }
+         CreateMatrix();
 
+         try
+         {
+             List<Node> path = AStart();
+             PrintMatrix(path);
+         }
+         catch(Exception e)
+         {
+             Console.WriteLine("Path not possible!");
+             PrintMatrix(new List<Node>());
+         }
+
+         Console.ReadLine();
+      }
+
+      static void CreateMatrix()
+      {
+          nodes = new Node[xLength, yLength];
+
+          for(int x = 0; x < xLength; x++)
+              for(int y = 0; y < yLength; y++)
+                  nodes[x,y] = new Node(x,y);
+
+          obstacles = Math.Min(obstacles, xLength * yLength);
+          Random rng = new Random(seed);
+          for(int i = 0; i < obstacles; i++)
+          {
+              int xRand = rng.Next(xLength);
+              int yRand = rng.Next(yLength);
+
+              Node n = nodes[xRand, yRand];
+
+              if(n.IsObstacle || n == startNode || n == endNode)
+              {
+                  i--;
+                  continue;
+              }
+
+              nodes[xRand,yRand].IsObstacle = true;
+          }
+      }
+
+      static void PrintMatrix(List<Node> _p)
+      {
+          for (int y = 0; y < yLength; y++)
+          {
+              for (int x = 0; x < xLength; x++)
+                  Console.Write(((nodes[x, y].IsObstacle) ? 'O' : ((_p.Contains(nodes[x, y])) ? 'X' : '*')));
+
+              Console.WriteLine();
+          }
+      }
 
     
-    static void CreateMatrix()
-    {
-        nodes = new Node[xLength, yLength];
-    
-        for(int x = 0; x < xLength; x++)
-            for(int y = 0; y < yLength; y++)
-                nodes[x,y] = new Node(x,y);
-
-        obstacles = Math.Min(obstacles, xLength * yLength);
-        Random rng = new Random(seed);
-        for(int i = 0; i < obstacles; i++)
-        {
-            int xRand = rng.Next(xLength);
-            int yRand = rng.Next(yLength);
-
-            Node n = nodes[xRand, yRand];
-    
-            if(n.IsObstacle || n == startNode || n == endNode)
-            {
-                i--;
-                continue;
-            }
-    
-            nodes[xRand,yRand].IsObstacle = true;
-        }
-    }
-
-    static void PrintMatrix(List<Node> _p)
-    {
-        for (int y = 0; y < yLength; y++)
-        {
-            for (int x = 0; x < xLength; x++)
-                Console.Write(((nodes[x, y].IsObstacle) ? 'O' : ((_p.Contains(nodes[x, y])) ? 'X' : '*')));
-
-            Console.WriteLine();
-        }
-    }
-
     static List<Node> AStart()
     {
         List<Node> openNodes = new List<Node>();
@@ -105,6 +104,7 @@ internal class AStar
 
             float nextG = 0f;
             float stepCost = 0f;
+
             foreach (var neighbour in GetNeighbours(currentNode)
                 .Where(x => currentNode.GetStepCost(x, out stepCost) && (nextG = currentNode.G + stepCost) < x.G))
             {
@@ -120,26 +120,26 @@ internal class AStar
 
         throw new InvalidOperationException();
     }
-
-    static List<Node> SetPath(Node _eN)
+    
+    static List<Node> SetPath(Node _endNode)
     {
         List<Node> path = new List<Node>();
 
-        for (; _eN != null; _eN = _eN.CameFrom)
-            path.Add(_eN);
+        for (; _endNode != null; _endNode = _endNode.CameFrom)
+            path.Add(_endNode);
 
         return path;
     }
 
-    private static List<Node> GetNeighbours(Node _n)
+    private static List<Node> GetNeighbours(Node _node)
     {
         List<Node> neighbours = new List<Node>();
 
-        for (int x = Math.Max(_n.X - 1, 0); x <= Math.Min(_n.X + 1, xLength - 1); x++)
-            for (int y = Math.Max(_n.Y - 1, 0); y <= Math.Min(_n.Y + 1, yLength - 1); y++)
+        for (int x = Math.Max(_node.X - 1, 0); x <= Math.Min(_node.X + 1, xLength - 1); x++)
+            for (int y = Math.Max(_node.Y - 1, 0); y <= Math.Min(_node.Y + 1, yLength - 1); y++)
                 neighbours.Add(nodes[x, y]);
 
-        neighbours.Remove(_n);
+        neighbours.Remove(_node);
         return neighbours;
     }
 
